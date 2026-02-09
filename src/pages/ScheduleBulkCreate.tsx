@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Clock, Save, Shield, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Trash2, Clock, Save, Shield, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,6 @@ type DraftCheckpointPlan = {
   status: Schedule["status"];
   timeSlots: ScheduleSlot[];
   timeInput: string;
-  labelInput: string;
 };
 
 function makeId(prefix: string) {
@@ -45,7 +44,6 @@ function createPlanRow(graceTimeMinutes: number): DraftCheckpointPlan {
     status: "active",
     timeSlots: [],
     timeInput: "",
-    labelInput: "",
   };
 }
 
@@ -257,9 +255,9 @@ export default function ScheduleBulkCreate() {
     setPlans((prev) => prev.filter((row) => row.id !== rowId));
   };
 
-  const addTimeSlot = (rowId: string) => {
+  const addTimeSlot = (rowId: string, selectedTime?: string) => {
     updatePlan(rowId, (row) => {
-      const normalizedTime = row.timeInput?.trim().slice(0, 5);
+      const normalizedTime = (selectedTime || row.timeInput)?.trim().slice(0, 5);
       if (!normalizedTime) return row;
       if (!/^\d{2}:\d{2}$/.test(normalizedTime)) {
         toast({ title: "Invalid time", description: "Use HH:MM format." });
@@ -287,13 +285,12 @@ export default function ScheduleBulkCreate() {
       const nextSlot: ScheduleSlot = {
         id: makeId("ts"),
         time: normalizedTime,
-        label: row.labelInput || `Visit at ${format12h(normalizedTime)}`,
+        label: `Visit at ${format12h(normalizedTime)}`,
       };
       return {
         ...row,
         timeSlots: [...row.timeSlots, nextSlot].sort((a, b) => a.time.localeCompare(b.time)),
         timeInput: "",
-        labelInput: "",
       };
     });
   };
@@ -494,9 +491,9 @@ export default function ScheduleBulkCreate() {
         />
         {guard && (
           <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
               <Shield className="w-3.5 h-3.5" />
-              <span>Zone: {guard.assignedZone || "Not assigned"} | Checkpoints available: {availableCheckpoints.length}</span>
+              <span className="min-w-0 break-words">Zone: {guard.assignedZone || "Not assigned"} | Checkpoints available: {availableCheckpoints.length}</span>
             </div>
           </div>
         )}
@@ -544,17 +541,17 @@ export default function ScheduleBulkCreate() {
        
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {plans.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/70 bg-card/60 p-4 text-center text-sm text-muted-foreground">
+          <div className="lg:col-span-2 rounded-lg border border-dashed border-border/70 bg-card/60 p-4 text-center text-sm text-muted-foreground">
             Select a zone to load checkpoints.
           </div>
         ) : (
           plans.map((row) => (
-            <div key={row.id} className="stat-card p-3 space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
+            <div key={row.id} className="stat-card p-3 space-y-2.5 min-w-0 overflow-hidden">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground truncate">
                     {selectedCheckpointMap.get(row.checkpointId)?.name || "Checkpoint"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
@@ -564,15 +561,15 @@ export default function ScheduleBulkCreate() {
                 <button
                   type="button"
                   onClick={() => removePlanRow(row.id)}
-                  className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  className="shrink-0 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                   title="Remove checkpoint"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-12 gap-x-2 gap-y-2">
-                <div className="col-span-6 md:col-span-2 space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-1">
                   <Label>Grace</Label>
                   <Input
                     type="number"
@@ -581,7 +578,7 @@ export default function ScheduleBulkCreate() {
                     onChange={(e) => updatePlan(row.id, (current) => ({ ...current, graceTimeMinutes: Number(e.target.value) || 0 }))}
                   />
                 </div>
-                <div className="col-span-6 md:col-span-3 space-y-1">
+                <div className="space-y-1">
                   <Label>Status</Label>
                   <SearchableSelect
                     value={row.status}
@@ -594,27 +591,13 @@ export default function ScheduleBulkCreate() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-12 gap-x-2 gap-y-2 items-end">
-                <div className="col-span-12 md:col-span-2 space-y-1">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 xl:gap-x-2 xl:items-end">
+                <div className="space-y-1 xl:col-span-12">
                   <Label>Time</Label>
                   <TimePicker12h
                     value={row.timeInput}
-                    onChange={(value) => updatePlan(row.id, (current) => ({ ...current, timeInput: value }))}
+                    onChange={(value) => addTimeSlot(row.id, value)}
                   />
-                </div>
-                <div className="col-span-12 md:col-span-8 space-y-1">
-                  <Label>Label</Label>
-                  <Input
-                    className="h-10 text-sm"
-                    placeholder="Optional note"
-                    value={row.labelInput}
-                    onChange={(e) => updatePlan(row.id, (current) => ({ ...current, labelInput: e.target.value }))}
-                  />
-                </div>
-                <div className="col-span-12 md:col-span-2">
-                  <Button type="button" variant="outline" size="sm" className="w-full h-10 text-sm" onClick={() => addTimeSlot(row.id)} disabled={!row.timeInput}>
-                    <Plus className="w-4 h-4 mr-1" /> Add Time
-                  </Button>
                 </div>
               </div>
 

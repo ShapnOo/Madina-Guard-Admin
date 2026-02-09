@@ -14,7 +14,6 @@ import {
   ChevronDown,
   Bell,
   User,
-  Sparkles,
   ShieldCheck,
   Dot,
   FileText,
@@ -77,7 +76,7 @@ export default function AdminLayout() {
     <div className="flex min-h-screen w-full bg-[hsl(var(--background))]">
       {/* Sidebar */}
       <motion.aside
-        animate={{ width: collapsed ? 88 : 280 }}
+        animate={{ width: collapsed ? 80 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
         className="fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-sidebar-border overflow-hidden"
         style={{ background: "var(--gradient-sidebar)" }}
@@ -86,10 +85,10 @@ export default function AdminLayout() {
         <div className="absolute -bottom-24 -right-16 h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl" />
 
         {/* Brand */}
-        <div className="relative flex items-center h-20 px-4 border-b border-sidebar-border/70">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-sidebar-primary/95 flex items-center justify-center shadow-lg shadow-primary/20">
-              <ShieldCheck className="w-5 h-5 text-sidebar-primary-foreground" />
+        <div className="relative flex items-center h-16 px-3 border-b border-sidebar-border/70">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-sidebar-primary/95 flex items-center justify-center shadow-lg shadow-primary/20">
+              <ShieldCheck className="w-4 h-4 text-sidebar-primary-foreground" />
             </div>
             <AnimatePresence>
               {!collapsed && (
@@ -99,10 +98,10 @@ export default function AdminLayout() {
                   exit={{ opacity: 0, x: -8 }}
                   className="overflow-hidden whitespace-nowrap"
                 >
-                  <h1 className="text-[15px] font-bold text-sidebar-accent-foreground tracking-tight">Madina Movement Tracker</h1>
+                  <h1 className="text-[14px] font-bold text-sidebar-accent-foreground tracking-tight">Madina Movement</h1>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Dot className="w-4 h-4 -ml-1 text-emerald-400" />
-                    <p className="text-[10px] text-sidebar-foreground uppercase tracking-[0.2em]">Admin Console</p>
+                    <p className="text-[9px] text-sidebar-foreground uppercase tracking-[0.2em]">Admin Console</p>
                   </div>
                 </motion.div>
               )}
@@ -111,9 +110,9 @@ export default function AdminLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="relative flex-1 py-4 px-3 space-y-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="relative flex-1 py-3 px-2 space-y-1 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {!collapsed && (
-            <p className="px-3 pb-2 text-[10px] uppercase tracking-[0.22em] text-sidebar-foreground/70">
+            <p className="px-2.5 pb-1.5 text-[9px] uppercase tracking-[0.22em] text-sidebar-foreground/70">
               Main Navigation
             </p>
           )}
@@ -127,7 +126,7 @@ export default function AdminLayout() {
                   <div className="flex items-center gap-1">
                     <NavLink
                       to={item.children[0].url}
-                      className={`relative flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group
+                      className={`relative flex-1 flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 group
                         ${isActive
                           ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/15"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/90 hover:text-sidebar-accent-foreground"
@@ -136,7 +135,7 @@ export default function AdminLayout() {
                       activeClassName=""
                     >
                       {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-white/90" />}
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isActive ? "bg-white/15" : "bg-white/5 group-hover:bg-white/10"}`}>
+                      <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${isActive ? "bg-white/15" : "bg-white/5 group-hover:bg-white/10"}`}>
                         <item.icon className="w-4 h-4 flex-shrink-0" />
                       </div>
                       <motion.span
@@ -151,7 +150,7 @@ export default function AdminLayout() {
                     <button
                       type="button"
                       onClick={() => setOpenMenus((prev) => ({ ...prev, [item.url]: !prev[item.url] }))}
-                      className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${
+                      className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${
                         isActive
                           ? "bg-sidebar-primary text-sidebar-primary-foreground"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/90 hover:text-sidebar-accent-foreground"
@@ -165,7 +164,7 @@ export default function AdminLayout() {
                   <NavLink
                     to={item.children ? item.children[0].url : item.url}
                     end={!item.children}
-                    className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group
+                    className={`relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 group
                       ${isActive
                         ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/15"
                         : "text-sidebar-foreground hover:bg-sidebar-accent/90 hover:text-sidebar-accent-foreground"
@@ -174,7 +173,7 @@ export default function AdminLayout() {
                     activeClassName=""
                   >
                     {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 rounded-r-full bg-white/90" />}
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isActive ? "bg-white/15" : "bg-white/5 group-hover:bg-white/10"}`}>
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${isActive ? "bg-white/15" : "bg-white/5 group-hover:bg-white/10"}`}>
                       <item.icon className="w-4 h-4 flex-shrink-0" />
                     </div>
                     <AnimatePresence>
@@ -193,14 +192,14 @@ export default function AdminLayout() {
                 )}
 
                 {!collapsed && item.children && openMenus[item.url] && (
-                  <div className="ml-12 space-y-1">
+                  <div className="ml-10 space-y-1">
                     {item.children.map((subItem) => {
                       const isSubActive = location.pathname === subItem.url;
                       return (
                         <NavLink
                           key={subItem.url}
                           to={subItem.url}
-                          className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                          className={`flex items-center gap-2 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
                             isSubActive
                               ? "bg-sidebar-accent text-sidebar-accent-foreground"
                               : "text-sidebar-foreground/80 hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground"
@@ -218,28 +217,16 @@ export default function AdminLayout() {
           })}
         </nav>
 
-        {!collapsed && (
-          <div className="px-3 pb-2">
-            <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/60 p-3">
-              <div className="flex items-center gap-2 text-sidebar-accent-foreground">
-                <Sparkles className="w-3.5 h-3.5 text-primary" />
-                <p className="text-xs font-semibold">Powered by Pakiza Software Limited</p>
-              </div>
-             
-            </div>
-          </div>
-        )}
-
       </motion.aside>
 
       {/* Main Content */}
       <motion.div
-        animate={{ marginLeft: collapsed ? 88 : 280 }}
+        animate={{ marginLeft: collapsed ? 80 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
         className="flex-1 flex flex-col min-h-screen"
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 bg-card/75 backdrop-blur-xl border-b border-border/70 px-6 py-3">
+        <header className="sticky top-0 z-30 bg-card/75 backdrop-blur-xl border-b border-border/70 px-4 py-2">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -249,29 +236,29 @@ export default function AdminLayout() {
                 <ChevronRight className="w-3.5 h-3.5" />
                 <span className="text-foreground font-medium">{pageTitle}</span>
               </div>
-              <p className="text-sm font-semibold text-foreground mt-0.5">Security Operations Workspace</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">Security Operations</p>
             </div>
 
             <div className="flex items-center gap-2.5">
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background/85 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/85 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Logout</span>
               </button>
-              <button className="relative p-2.5 rounded-xl border border-border bg-background/80 text-muted-foreground hover:text-foreground hover:bg-background transition-colors">
+              <button className="relative p-2 rounded-lg border border-border bg-background/80 text-muted-foreground hover:text-foreground hover:bg-background transition-colors">
                 <Bell className="w-[18px] h-[18px]" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
               </button>
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-background/85 px-2.5 py-1.5">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary-foreground" />
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-background/85 px-2 py-1.5">
+                <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-primary-foreground" />
                 </div>
                 <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-foreground leading-none">Admin</p>
-                  <p className="text-[11px] text-muted-foreground mt-1 leading-none">Madina Group</p>
+                  <p className="text-xs font-semibold text-foreground leading-none">Admin</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">Madina Group</p>
                 </div>
               </div>
             </div>
@@ -279,7 +266,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4">
           <Outlet />
         </main>
       </motion.div>
