@@ -26,7 +26,7 @@ const DEMO_BINDINGS_BY_EMPLOYEE: Record<
   },
   "GRD-003": {
     deviceId: "device-demo-g3",
-    deviceName: "Nokia 1110 - Android 13 (Khulna)",
+    deviceName: "Nokia 1110 (Khulna)",
     boundAt: "2026-02-04T10:05:00Z",
     lastLoginAt: "2026-02-08T18:22:00Z",
   },

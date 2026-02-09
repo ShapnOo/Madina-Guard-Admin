@@ -52,7 +52,7 @@ export const mockGuards: Guard[] = [
     employeeId: "GRD-003",
     password: "12345678",
     boundDeviceId: "device-demo-g3",
-    boundDeviceName: "Nokia 1110 - Android 13 (Khulna)",
+    boundDeviceName: "Nokia 1110 (Khulna)",
     boundAt: "2026-02-04T10:05:00Z",
     lastLoginAt: "2026-02-08T18:22:00Z",
     status: "on-duty",
