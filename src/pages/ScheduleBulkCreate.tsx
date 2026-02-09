@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Plus, Trash2, Clock, Save, Shield, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { mockGuards, mockCheckpoints } from "@/data/mock-data";
+import { mockGuards, mockCheckpoints, mockZones } from "@/data/mock-data";
 import type { Schedule, ScheduleSlot } from "@/types/guard-management";
 import { addSchedules, readSchedules } from "@/lib/schedule-store";
 import { useToast } from "@/hooks/use-toast";
@@ -37,16 +37,23 @@ function makeId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function createPlanRow(): DraftCheckpointPlan {
+function createPlanRow(graceTimeMinutes: number): DraftCheckpointPlan {
   return {
     id: makeId("row"),
     checkpointId: "",
-    graceTimeMinutes: 10,
+    graceTimeMinutes,
     status: "active",
     timeSlots: [],
     timeInput: "",
     labelInput: "",
   };
+}
+
+function buildPlansFromCheckpoints(checkpoints: Array<{ id: string }>, graceTimeMinutes: number) {
+  return checkpoints.map((checkpoint) => ({
+    ...createPlanRow(graceTimeMinutes),
+    checkpointId: checkpoint.id,
+  }));
 }
 
 const HOURS_12 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -208,21 +215,19 @@ function TimePicker12h({
 export default function ScheduleBulkCreate() {
   const { toast } = useToast();
   const [guardId, setGuardId] = useState("");
-  const [plans, setPlans] = useState<DraftCheckpointPlan[]>([createPlanRow()]);
+  const [zoneName, setZoneName] = useState("");
+  const [globalGrace, setGlobalGrace] = useState(10);
+  const [plans, setPlans] = useState<DraftCheckpointPlan[]>([createPlanRow(10)]);
   const [rangeStart, setRangeStart] = useState(() => new Date().toISOString().slice(0, 10));
   const [rangeEnd, setRangeEnd] = useState(() => new Date().toISOString().slice(0, 10));
+  const lastZoneRef = useRef<string>("");
 
   const guard = useMemo(() => mockGuards.find((g) => g.id === guardId), [guardId]);
 
   const availableCheckpoints = useMemo(() => {
-    if (!guard?.assignedZone) return mockCheckpoints.filter((c) => c.status === "active");
-    return mockCheckpoints.filter((c) => c.status === "active" && c.zoneName === guard.assignedZone);
-  }, [guard]);
-
-  const checkpointOptions = availableCheckpoints.map((cp) => ({
-    value: cp.id,
-    label: `${cp.name} - ${cp.zoneName}`,
-  }));
+    if (!zoneName) return [];
+    return mockCheckpoints.filter((c) => c.status === "active" && c.zoneName === zoneName);
+  }, [zoneName]);
 
   const selectedCheckpointMap = useMemo(() => {
     return new Map(mockCheckpoints.map((cp) => [cp.id, cp]));
@@ -238,14 +243,18 @@ export default function ScheduleBulkCreate() {
     [plans],
   );
 
+  useEffect(() => {
+    if (lastZoneRef.current === zoneName && plans.length > 0) return;
+    lastZoneRef.current = zoneName;
+    setPlans(buildPlansFromCheckpoints(availableCheckpoints, globalGrace));
+  }, [zoneName, availableCheckpoints, globalGrace, plans.length]);
+
   const updatePlan = (rowId: string, updater: (row: DraftCheckpointPlan) => DraftCheckpointPlan) => {
     setPlans((prev) => prev.map((row) => (row.id === rowId ? updater(row) : row)));
   };
 
-  const addPlanRow = () => setPlans((prev) => [...prev, createPlanRow()]);
-
   const removePlanRow = (rowId: string) => {
-    setPlans((prev) => (prev.length === 1 ? prev : prev.filter((row) => row.id !== rowId)));
+    setPlans((prev) => prev.filter((row) => row.id !== rowId));
   };
 
   const addTimeSlot = (rowId: string) => {
@@ -299,6 +308,10 @@ export default function ScheduleBulkCreate() {
   const handleSaveAll = () => {
     if (!guard) {
       toast({ title: "Select guard", description: "Please select a guard first." });
+      return;
+    }
+    if (plans.length === 0) {
+      toast({ title: "Select zone", description: "Please select a zone to load checkpoints." });
       return;
     }
     if (!rangeStart || !rangeEnd) {
@@ -433,7 +446,7 @@ export default function ScheduleBulkCreate() {
       title: "Schedules created",
       description: `${newSchedules.length} assignments added for ${guard.name}.`,
     });
-    setPlans([createPlanRow()]);
+    setPlans([createPlanRow(globalGrace)]);
   };
 
   return (
@@ -466,7 +479,13 @@ export default function ScheduleBulkCreate() {
           value={guardId}
           onChange={(value) => {
             setGuardId(value);
-            setPlans([createPlanRow()]);
+            const nextGuard = mockGuards.find((g) => g.id === value);
+            const nextZone = nextGuard?.assignedZone || "";
+            setZoneName(nextZone);
+            const nextCheckpoints = nextZone
+              ? mockCheckpoints.filter((c) => c.status === "active" && c.zoneName === nextZone)
+              : [];
+            setPlans(buildPlansFromCheckpoints(nextCheckpoints, globalGrace));
           }}
           options={mockGuards
             .filter((g) => g.status !== "inactive")
@@ -483,6 +502,37 @@ export default function ScheduleBulkCreate() {
         )}
         <div className="grid grid-cols-12 gap-x-2 gap-y-2">
           <div className="col-span-12 md:col-span-6 space-y-1">
+            <Label>Zone</Label>
+            <SearchableSelect
+              value={zoneName}
+              onChange={setZoneName}
+              options={[
+                ...mockZones.map((zone) => ({ value: zone.name, label: zone.name })),
+              ]}
+              placeholder="Select zone"
+            />
+          </div>
+          <div className="col-span-12 md:col-span-6 space-y-1">
+            <Label>Global Grace (min)</Label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                min={0}
+                value={globalGrace}
+                onChange={(e) => setGlobalGrace(Number(e.target.value) || 0)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPlans((prev) => prev.map((row) => ({ ...row, graceTimeMinutes: globalGrace })))}
+              >
+                Apply to All
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-12 gap-x-2 gap-y-2">
+          <div className="col-span-12 md:col-span-6 space-y-1">
             <Label>Start Date</Label>
             <DatePicker value={rangeStart} onChange={setRangeStart} />
           </div>
@@ -495,115 +545,108 @@ export default function ScheduleBulkCreate() {
       </div>
 
       <div className="space-y-3">
-        {plans.map((row, index) => (
-          <div key={row.id} className="stat-card p-3 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">
-                  Checkpoint Plan #{index + 1}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {row.checkpointId
-                    ? selectedCheckpointMap.get(row.checkpointId)?.name || "Selected checkpoint"
-                    : "Select checkpoint and add times"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => removePlanRow(row.id)}
-                className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-12 gap-x-2 gap-y-2">
-              <div className="col-span-12 md:col-span-7 space-y-1">
-                <Label>Checkpoint</Label>
-                <SearchableSelect
-                  value={row.checkpointId}
-                  onChange={(value) => updatePlan(row.id, (current) => ({ ...current, checkpointId: value }))}
-                  options={checkpointOptions}
-                  placeholder="Select checkpoint"
-                />
-              </div>
-              <div className="col-span-6 md:col-span-2 space-y-1">
-                <Label>Grace</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={row.graceTimeMinutes}
-                  onChange={(e) => updatePlan(row.id, (current) => ({ ...current, graceTimeMinutes: Number(e.target.value) || 0 }))}
-                />
-              </div>
-              <div className="col-span-6 md:col-span-3 space-y-1">
-                <Label>Status</Label>
-                <SearchableSelect
-                  value={row.status}
-                  onChange={(value) => updatePlan(row.id, (current) => ({ ...current, status: value as Schedule["status"] }))}
-                  options={[
-                    { value: "active", label: "Active" },
-                    { value: "inactive", label: "Inactive" },
-                  ]}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-12 gap-x-2 gap-y-2 items-end">
-              <div className="col-span-12 md:col-span-2 space-y-1">
-                <Label>Time</Label>
-                <TimePicker12h
-                  value={row.timeInput}
-                  onChange={(value) => updatePlan(row.id, (current) => ({ ...current, timeInput: value }))}
-                />
-              </div>
-              <div className="col-span-12 md:col-span-8 space-y-1">
-                <Label>Label</Label>
-                <Input
-                  className="h-10 text-sm"
-                  placeholder="Optional note"
-                  value={row.labelInput}
-                  onChange={(e) => updatePlan(row.id, (current) => ({ ...current, labelInput: e.target.value }))}
-                />
-              </div>
-              <div className="col-span-12 md:col-span-2">
-                <Button type="button" variant="outline" size="sm" className="w-full h-10 text-sm" onClick={() => addTimeSlot(row.id)} disabled={!row.timeInput}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Time
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-1.5">
-              {row.timeSlots.length === 0 && (
-                <p className="text-xs text-muted-foreground italic py-1">No time added.</p>
-              )}
-              {row.timeSlots.map((slot) => (
-                <div key={slot.id} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1">
-                  <Clock className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-xs font-mono">{format12h(slot.time)}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeTimeSlot(row.id, slot.id)}
-                    className="ml-1 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-xs text-muted-foreground">
-              {row.timeSlots.length} visits/day | Grace {row.graceTimeMinutes} min | {toInitCapLabel(row.status)}
-            </div>
+        {plans.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border/70 bg-card/60 p-4 text-center text-sm text-muted-foreground">
+            Select a zone to load checkpoints.
           </div>
-        ))}
+        ) : (
+          plans.map((row) => (
+            <div key={row.id} className="stat-card p-3 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {selectedCheckpointMap.get(row.checkpointId)?.name || "Checkpoint"}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {selectedCheckpointMap.get(row.checkpointId)?.zoneName || zoneName || "Zone"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removePlanRow(row.id)}
+                  className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title="Remove checkpoint"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-12 gap-x-2 gap-y-2">
+                <div className="col-span-6 md:col-span-2 space-y-1">
+                  <Label>Grace</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={row.graceTimeMinutes}
+                    onChange={(e) => updatePlan(row.id, (current) => ({ ...current, graceTimeMinutes: Number(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="col-span-6 md:col-span-3 space-y-1">
+                  <Label>Status</Label>
+                  <SearchableSelect
+                    value={row.status}
+                    onChange={(value) => updatePlan(row.id, (current) => ({ ...current, status: value as Schedule["status"] }))}
+                    options={[
+                      { value: "active", label: "Active" },
+                      { value: "inactive", label: "Inactive" },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12 gap-x-2 gap-y-2 items-end">
+                <div className="col-span-12 md:col-span-2 space-y-1">
+                  <Label>Time</Label>
+                  <TimePicker12h
+                    value={row.timeInput}
+                    onChange={(value) => updatePlan(row.id, (current) => ({ ...current, timeInput: value }))}
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-8 space-y-1">
+                  <Label>Label</Label>
+                  <Input
+                    className="h-10 text-sm"
+                    placeholder="Optional note"
+                    value={row.labelInput}
+                    onChange={(e) => updatePlan(row.id, (current) => ({ ...current, labelInput: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-2">
+                  <Button type="button" variant="outline" size="sm" className="w-full h-10 text-sm" onClick={() => addTimeSlot(row.id)} disabled={!row.timeInput}>
+                    <Plus className="w-4 h-4 mr-1" /> Add Time
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {row.timeSlots.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic py-1">No time added.</p>
+                )}
+                {row.timeSlots.map((slot) => (
+                  <div key={slot.id} className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1">
+                    <Clock className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs font-mono">{format12h(slot.time)}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTimeSlot(row.id, slot.id)}
+                      className="ml-1 p-0.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                {row.timeSlots.length} visits/day | Grace {row.graceTimeMinutes} min | {toInitCapLabel(row.status)}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="sticky bottom-3 z-20">
         <div className="stat-card p-2.5 flex items-center justify-between gap-2">
-          <Button type="button" variant="outline" size="sm" className="h-9 text-sm" onClick={addPlanRow}>
-          <Plus className="w-4 h-4 mr-1" /> Add Checkpoint Row
-          </Button>
           <Button type="button" size="sm" className="h-9 text-sm" onClick={handleSaveAll}>
             <Save className="w-4 h-4 mr-1" /> Save All
           </Button>

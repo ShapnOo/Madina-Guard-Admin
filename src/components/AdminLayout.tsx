@@ -99,7 +99,7 @@ export default function AdminLayout() {
                   exit={{ opacity: 0, x: -8 }}
                   className="overflow-hidden whitespace-nowrap"
                 >
-                  <h1 className="text-[15px] font-bold text-sidebar-accent-foreground tracking-tight">GuardWise</h1>
+                  <h1 className="text-[15px] font-bold text-sidebar-accent-foreground tracking-tight">Madina Movement Tracker</h1>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Dot className="w-4 h-4 -ml-1 text-emerald-400" />
                     <p className="text-[10px] text-sidebar-foreground uppercase tracking-[0.2em]">Admin Console</p>
