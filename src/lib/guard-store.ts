@@ -8,6 +8,58 @@ function hasWindow() {
   return typeof window !== "undefined";
 }
 
+const DEMO_BINDINGS_BY_EMPLOYEE: Record<
+  string,
+  { deviceId: string; deviceName: string; boundAt: string; lastLoginAt: string }
+> = {
+  "GRD-001": {
+    deviceId: "device-demo-g1",
+    deviceName: "Samsung Galaxy A54 - Android 14 (Dhaka)",
+    boundAt: "2026-02-01T08:15:00Z",
+    lastLoginAt: "2026-02-09T09:42:00Z",
+  },
+  "GRD-002": {
+    deviceId: "device-demo-g2",
+    deviceName: "Xiaomi Redmi Note 13 - Android 14 (Chattogram)",
+    boundAt: "2026-02-03T07:50:00Z",
+    lastLoginAt: "2026-02-09T07:12:00Z",
+  },
+  "GRD-003": {
+    deviceId: "device-demo-g3",
+    deviceName: "Nokia 1110 - Android 13 (Khulna)",
+    boundAt: "2026-02-04T10:05:00Z",
+    lastLoginAt: "2026-02-08T18:22:00Z",
+  },
+  "GRD-004": {
+    deviceId: "device-demo-g4",
+    deviceName: "realme C55 - Android 14 (Sylhet)",
+    boundAt: "2026-02-02T06:40:00Z",
+    lastLoginAt: "2026-02-09T05:58:00Z",
+  },
+};
+
+function ensureMinimumDemoBindings(guards: Guard[]) {
+  const alreadyBound = guards.filter((guard) => !!guard.boundDeviceId).length;
+  if (alreadyBound >= 4) return guards;
+
+  let applied = 0;
+  const next = guards.map((guard) => {
+    if (guard.boundDeviceId) return guard;
+    const preset = DEMO_BINDINGS_BY_EMPLOYEE[guard.employeeId];
+    if (!preset) return guard;
+    applied += 1;
+    return {
+      ...guard,
+      boundDeviceId: preset.deviceId,
+      boundDeviceName: preset.deviceName,
+      boundAt: preset.boundAt,
+      lastLoginAt: preset.lastLoginAt,
+    };
+  });
+
+  return applied > 0 ? next : guards;
+}
+
 export function readGuards(): Guard[] {
   if (!hasWindow()) return mockGuards;
   const raw = window.localStorage.getItem(GUARD_STORAGE_KEY);
@@ -15,10 +67,13 @@ export function readGuards(): Guard[] {
   try {
     const parsed = JSON.parse(raw) as Guard[];
     if (!Array.isArray(parsed)) return mockGuards;
-    return parsed.map((guard) => ({
+    const normalized = parsed.map((guard) => ({
       ...guard,
       password: guard.password || "12345678",
     }));
+    const withBindings = ensureMinimumDemoBindings(normalized);
+    if (withBindings !== normalized) writeGuards(withBindings);
+    return withBindings;
   } catch {
     return mockGuards;
   }
