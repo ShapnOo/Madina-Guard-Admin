@@ -18,6 +18,7 @@ import UserManagement from "@/pages/UserManagement";
 import Alerts from "@/pages/Alerts";
 import AuditTrail from "@/pages/AuditTrail";
 import Login from "@/pages/Login";
+import GuardLogin from "@/pages/GuardLogin";
 import CheckpointQrDisplay from "@/pages/CheckpointQrDisplay";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +32,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/guard-login" element={<GuardLogin />} />
           <Route element={<AdminLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/guards" element={<Guards />} />

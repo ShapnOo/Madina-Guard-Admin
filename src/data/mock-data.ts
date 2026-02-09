@@ -14,12 +14,40 @@ import type {
 } from "@/types/guard-management";
 
 export const mockGuards: Guard[] = [
-  { id: "g1", name: "Rahim Uddin", phone: "+880 1712345678", email: "rahim@madina.com", employeeId: "GRD-001", status: "on-duty", assignedZone: "Main Building", createdAt: "2025-12-01" },
-  { id: "g2", name: "Kamal Hossain", phone: "+880 1723456789", email: "kamal@madina.com", employeeId: "GRD-002", status: "active", assignedZone: "Warehouse", createdAt: "2025-12-05" },
-  { id: "g3", name: "Jamal Ahmed", phone: "+880 1734567890", email: "jamal@madina.com", employeeId: "GRD-003", status: "on-duty", assignedZone: "Main Building", createdAt: "2025-12-10" },
-  { id: "g4", name: "Saiful Islam", phone: "+880 1745678901", email: "saiful@madina.com", employeeId: "GRD-004", status: "active", assignedZone: "Parking Area", createdAt: "2026-01-02" },
-  { id: "g5", name: "Noor Mohammad", phone: "+880 1756789012", email: "noor@madina.com", employeeId: "GRD-005", status: "inactive", createdAt: "2026-01-10" },
-  { id: "g6", name: "Faruk Hasan", phone: "+880 1767890123", email: "faruk@madina.com", employeeId: "GRD-006", status: "on-duty", assignedZone: "Warehouse", createdAt: "2026-01-15" },
+  {
+    id: "g1",
+    name: "Rahim Uddin",
+    phone: "+880 1712345678",
+    email: "rahim@madina.com",
+    employeeId: "GRD-001",
+    password: "12345678",
+    boundDeviceId: "device-demo-g1",
+    boundDeviceName: "Samsung A54 - Android 14",
+    boundAt: "2026-02-01T08:15:00Z",
+    lastLoginAt: "2026-02-09T09:42:00Z",
+    status: "on-duty",
+    assignedZone: "Main Building",
+    createdAt: "2025-12-01",
+  },
+  {
+    id: "g2",
+    name: "Kamal Hossain",
+    phone: "+880 1723456789",
+    email: "kamal@madina.com",
+    employeeId: "GRD-002",
+    password: "12345678",
+    boundDeviceId: "device-demo-g2",
+    boundDeviceName: "iPhone 13 - iOS 17",
+    boundAt: "2026-02-03T07:50:00Z",
+    lastLoginAt: "2026-02-09T07:12:00Z",
+    status: "active",
+    assignedZone: "Warehouse",
+    createdAt: "2025-12-05",
+  },
+  { id: "g3", name: "Jamal Ahmed", phone: "+880 1734567890", email: "jamal@madina.com", employeeId: "GRD-003", password: "12345678", status: "on-duty", assignedZone: "Main Building", createdAt: "2025-12-10" },
+  { id: "g4", name: "Saiful Islam", phone: "+880 1745678901", email: "saiful@madina.com", employeeId: "GRD-004", password: "12345678", status: "active", assignedZone: "Parking Area", createdAt: "2026-01-02" },
+  { id: "g5", name: "Noor Mohammad", phone: "+880 1756789012", email: "noor@madina.com", employeeId: "GRD-005", password: "12345678", status: "inactive", createdAt: "2026-01-10" },
+  { id: "g6", name: "Faruk Hasan", phone: "+880 1767890123", email: "faruk@madina.com", employeeId: "GRD-006", password: "12345678", status: "on-duty", assignedZone: "Warehouse", createdAt: "2026-01-15" },
 ];
 
 export const mockZones: Zone[] = [

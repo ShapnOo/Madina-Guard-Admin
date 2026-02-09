@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Shield, Phone, Mail, MoreVertical, Pencil, Trash2, Eye, EyeOff, Search } from "lucide-react";
+import { Plus, Shield, Phone, Mail, MoreVertical, Pencil, Trash2, Eye, EyeOff, Search, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,7 +21,8 @@ import DataTable from "@/components/DataTable";
 import SearchableSelect from "@/components/SearchableSelect";
 import { mockGuards, mockZones } from "@/data/mock-data";
 import type { Guard } from "@/types/guard-management";
-import { GUARD_STORAGE_KEY, readGuards, writeGuards } from "@/lib/guard-store";
+import { GUARD_STORAGE_KEY, readGuards, unbindGuardDevice, writeGuards } from "@/lib/guard-store";
+import { useToast } from "@/hooks/use-toast";
 
 function normalizeToLocalPhone(input: string) {
   const digits = input.replace(/\D/g, "");
@@ -32,6 +33,7 @@ function normalizeToLocalPhone(input: string) {
 }
 
 export default function Guards() {
+  const { toast } = useToast();
   const [guards, setGuards] = useState<Guard[]>(readGuards());
   const [searchName, setSearchName] = useState("");
   const [zoneFilter, setZoneFilter] = useState("all");
@@ -108,7 +110,7 @@ export default function Guards() {
     if (editingGuard) {
       const next = guards.map((g) =>
           g.id === editingGuard.id
-            ? { ...g, ...guardForm, phone: normalizedPhone }
+            ? { ...g, ...guardForm, phone: normalizedPhone, password: password.trim() ? password.trim() : g.password || "12345678" }
             : g,
       );
       setGuards(next);
@@ -118,6 +120,7 @@ export default function Guards() {
         id: `g${Date.now()}`,
         ...guardForm,
         phone: normalizedPhone,
+        password: password.trim(),
         createdAt: new Date().toISOString().split("T")[0],
       };
       const next = [...guards, newGuard];
@@ -131,6 +134,12 @@ export default function Guards() {
     const next = guards.filter((g) => g.id !== id);
     setGuards(next);
     writeGuards(next);
+  };
+
+  const handleUnbindDevice = (id: string) => {
+    const next = unbindGuardDevice(id);
+    setGuards(next);
+    toast({ title: "Device unbound", description: "Guard can now login from a new device." });
   };
 
   const filteredGuards = guards.filter((guard) => {
@@ -197,6 +206,19 @@ export default function Guards() {
       ),
     },
     {
+      key: "device",
+      label: "Device Binding",
+      render: (guard: Guard) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Smartphone className="w-3 h-3" />
+            <span className="text-xs">{guard.boundDeviceName || "Not bound"}</span>
+          </div>
+          {guard.boundAt && <p className="text-[11px] text-muted-foreground">Bound: {new Date(guard.boundAt).toLocaleString()}</p>}
+        </div>
+      ),
+    },
+    {
       key: "actions",
       label: "",
       render: (guard: Guard) => (
@@ -209,6 +231,9 @@ export default function Guards() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => openEdit(guard)}>
               <Pencil className="w-4 h-4 mr-2" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleUnbindDevice(guard.id)} disabled={!guard.boundDeviceId}>
+              <Smartphone className="w-4 h-4 mr-2" /> Unbind Device
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleDelete(guard.id)} className="text-destructive">
               <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -353,33 +378,31 @@ export default function Guards() {
               </div>
             </div>
 
-            {!editingGuard && (
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="Set guard password"
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+            <div className="space-y-2">
+              <Label>{editingGuard ? "Password (optional)" : "Password"}</Label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder={editingGuard ? "Leave empty to keep current" : "Set guard password"}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-            )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={handleSave}
-              disabled={!form.name || !form.employeeId || !form.phoneNumber || (!editingGuard && !form.password)}
+              disabled={!form.name || !form.employeeId || !form.phoneNumber || (!editingGuard && !form.password.trim())}
             >
               {editingGuard ? "Update" : "Create"} Guard
             </Button>

@@ -4,7 +4,7 @@ import { CheckCircle2, Eye, EyeOff, Lock, LogIn, ShieldCheck, User } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -126,6 +126,13 @@ export default function Login() {
               <LogIn className="mr-2 h-4 w-4" />
               {loading ? "Signing In..." : "Sign In"}
             </Button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              Guard login available at{" "}
+              <Link to="/guard-login" className="text-primary hover:underline">
+                /guard-login
+              </Link>
+            </p>
           </form>
         </motion.div>
       </div>

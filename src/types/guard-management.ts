@@ -4,6 +4,11 @@ export interface Guard {
   phone: string;
   email: string;
   employeeId: string;
+  password?: string;
+  boundDeviceId?: string;
+  boundDeviceName?: string;
+  boundAt?: string;
+  lastLoginAt?: string;
   status: "active" | "inactive" | "on-duty";
   assignedZone?: string;
   createdAt: string;
